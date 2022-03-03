@@ -26,7 +26,7 @@
             - 기존 계층적 모델과 달리, 각 레코드는 여러 부모(multiple parents)를 둘 수 있도록 허용하여 many-to-one / many-to-many 관계를 표현
             - 각 레코드 간의 링크는 관계형 모델의 FK가 아닌 프로그래밍 언어의 포인터와 유사한 개념
             - 각 레코드에 접근하기 위해선 `access path`를 따라, 루트 레코드로부터 링크 체인을 따라 순회해서 접근해야 함
-            - `many-to-many` 관계의 특성 상 `access path` 는 유일하지 않을 수 있음
+            - `many-to-many` 관계의 특성 상, 특정 노드에 접근하는 `access path` 는 유일하지 않을 수 있음 -> 개발 시 이를 염두에 두어야해서 개발 코스트 증가
             - 쿼리 역시 `access path`를 따라 커서를 움직이며 수행됨 -> `access path`에 변경이 있으면 쿼리 코드 역시 이에 맞게 수정되어야 함
         - 대안 2) 관계형(Relational) 모델: SQL!
             - lay out all the data in open! 
@@ -92,8 +92,16 @@
 ### Triple-Stores and SPARQL
 - property graph 모델과 유사하지만, 각각의 노드 연결 엣지를 튜플 형태로 저장한다는 점이 특징 `(subject, predicate[verb], object)`
 - `subject`는 vertex 과 되며, `object`는 다른 vertex 일 수도 있고, (원시형 데이터타입일 경우에는) `subject` 노트의 프로퍼티가 됨
-- 이러한 형태의 그래프 모델은 `semactic web` 에서 처음으로 쓰였음 ~ RDF(Resource Description Framework)
+- 이러한 형태의 그래프 모델은 `semantic web` 에서 처음으로 쓰였음 ~ RDF(Resource Description Framework)
 - SPARQL 은 RDF 데이터모델(triple-stores)에 대한 쿼리 언어임 (Cypher 는 SPARQL을 참조하여 개발됨)
 > Graph Model vs Network Model (p. 60)
+> 
+> 네트워크 모델(CODASYL)은 데이터 계층에 대한 스키마를 정의하여 상/하위에 올 수 있는 레코드 타입이 제한됨 <-> 그래프 모델은 노드 연결 간에 스키마 제약이 없음
+> 
+> 네트워크 모델(CODASYL)은 특정 레코드 접근 시, access path 를 따라 순회해서만 접근할 수 있음 <-> 그래프 모델은 각 노드가 갖는 unique ID(UUID)를 통해, 각 노드에 직접 접근할 수 있음(refer directly by unique ID) + 인덱스를 둘 수 있음(index to find vertices with a particular value)
+>
+> 네트워크 모델(CODASYL)은 스토리지 레이아웃 특성 상 레코드의 순서에 대해 고려해야 함
+> 
+> 네트워크 모델(CODASYL)의 쿼리는 명령형인데 비해, 그래프 모델의 쿼리는 명령형/선언형 모두 사용 가능
 
 ### Datalog : 그래프 모델에 대해 처음으로 제안된 학술 모델 (상용 모델의 시초)
