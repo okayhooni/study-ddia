@@ -57,7 +57,7 @@
 - traditional fixed-line telephone network: `synchronous` & `bounded delay`
 - Latency and Resource Utilization trade-off
 
-### Unreliable CLocks
+### Unreliable Clocks
 - durations & points in time
 - synchronized clocks to some degree with `Network Time Protocol(NTP)`
 #### Monotonic versus Time-of-Day Clocks
