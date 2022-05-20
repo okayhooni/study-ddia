@@ -58,7 +58,19 @@
 - Latency and Resource Utilization trade-off
 
 ### Unreliable CLocks
+- durations & points in time
+- synchronized clocks to some degree with `Network Time Protocol(NTP)`
 #### Monotonic versus Time-of-Day Clocks
+- time-of-day clock
+  - `clock_gettime(CLOCK_REALTIME)` on Linux
+  - wall-clock time
+  - time-of-day clocks are usually synchronized with NTP
+  - if the local clock is too far ahed of the NTP server, it may be forcibly reset and appear to jump back to a previous point in time.
+  - thsese jumps, as well as the fact that they often ignore leap seconds, make time-of-day clocks unsuitable for measuring elpased time
+- monotonic clock
+  - `clock_gettime(CLOCK_MONOTONIC)` on Linux
+  - guaranteed to always move forward!
+  - NTP may adjust the frequency at which the monotonic clock moves forward(`slewing the clock`)
 #### Clock synchronization and Accuracy
 #### Relying on Synchronized Clocks
 #### Process Pauses
