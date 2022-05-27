@@ -129,6 +129,9 @@
   - you also need to know `when that order is finalized`
 
 #### Total Order Broadcast
+- required safety properties
+  - reliable delivery
+  - totally ordered delivery
 - using total order broadcast
 - implementing `linearizable storage` using `total order broadcast`
 - implementing `total order broadcast` using `linearizable storage`
