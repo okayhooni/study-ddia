@@ -133,5 +133,7 @@
   - reliable delivery
   - totally ordered delivery
 - using total order broadcast
+  - `Consensus services` such as `ZooKeeper` and `etcd` actually implement `total order broadcast`
+  - strong connection between `total order broadcast` and `consensus`
 - implementing `linearizable storage` using `total order broadcast`
 - implementing `total order broadcast` using `linearizable storage`
