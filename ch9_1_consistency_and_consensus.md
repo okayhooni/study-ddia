@@ -126,6 +126,7 @@
   - simply a pair of `(counter, node ID)`
 - `Timestamp ordering` is not sufficient
   - ex) `RIGHT NOW`
+  - you also need to know `when that order is finalized`
 
 #### Total Order Broadcast
 - using total order broadcast
