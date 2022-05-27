@@ -92,3 +92,42 @@
     - `severral copies of the data`: one in main momory, and perhpas several more in various caches
 
 ### Ordering Guarantees
+- `linearizable register`: behaves as if there is only a single copy of the data, and that every operation apeears to take effect atomically at one point in time.
+- `well-defined-order`
+  - leader in `single-leader replication` determine the `order of writes` in the replication log-that is, the `order` in which followers apply those writes.
+  - `serializability` is about ensuring that `transactions` behave as if they were executed in `some sequential order`
+  - the use of `timestamps and clocks` in distributed system
+
+#### Ordering and Causality
+- `ordering` helps preserve `causality` (~`causl dependency`)
+- these chains of causally dependent operations define the `causal order` in the system. (~`what happened before what`)
+- `causally consistent`: system obeys the `ordering` imposed by `causality`
+  - `snpashot isolation` provides causal consistency
+- `causal order` is not a `total order`
+  - ex) natural numbers are `totally ordered` / `mathematical sets` are `partially ordered` with incomparable pairs
+  - Linearizability: have a `total order` of operations (no `concurrent` operations in a linearizable datastore)
+  - Causality: define a `partial order` (incomparable if they are `concurrent`, `concurrency` would mean that the timeline branches and merges again)
+- `linearizability` is stronger than `causal consistency`
+  - `linearizability` implies `causality`, but is NOT the only way of preserving `causality`
+  - the good news is that a `middle ground` is possible.
+  - `causal consistency` is the strongest possible consistency model
+- capturing causal dependencies
+  - we need some way of describing the `knowledge` of a node in the system.
+  - `version vectors`: track causal dependencies across the entire database
+  - database needs to know which `version` of the data was read by the application for `causal ordering`
+    - `version number` from the prior operation is passed back to the database on a `write`
+    - conflict detection of `SSI(Serializable Snapshot Isolation)`
+
+#### Sequence Number Ordering
+- actually keeping track of all causal dependencies can become `impractical` ~ `overhead`
+- BETTER WAY: use `sequence numbers` or `timestamps(physical clock or logical clock)` to `order` events!
+- `Noncausal` sequence number generators
+- `Lamport timestamps`
+  - simply a pair of `(counter, node ID)`
+- `Timestamp ordering` is not sufficient
+  - ex) `RIGHT NOW`
+
+#### Total Order Broadcast
+- using total order broadcast
+- implementing `linearizable storage` using `total order broadcast`
+- implementing `total order broadcast` using `linearizable storage`
