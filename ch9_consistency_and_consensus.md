@@ -129,11 +129,80 @@
   - you also need to know `when that order is finalized`
 
 #### Total Order Broadcast
+- Knowing when your `total order is finalized` is captured in the topic of `total order broadcast`(=`atomic broadcast`)
+- `Total order broadcast` is usually described ad a `protocol` for exchanging messages between nodes
 - required safety properties
   - reliable delivery
   - totally ordered delivery
 - using total order broadcast
   - `Consensus services` such as `ZooKeeper` and `etcd` actually implement `total order broadcast`
-  - strong connection between `total order broadcast` and `consensus`
+    - strong connection between `total order broadcast` and `consensus`
+  - `total order broadcast` is exactly what you need for `database replication`
+    - `state macine replication`: if every `message` represents a `write` to the database, and every replica processes the same `writes` in the same `order`, then the replicas will remain consistent with each other.
+  - `total order broadcast` can be used to implement `serializable` transactions
+    - if every `message` represents a `deterministic` transaction to be executed as a `stored procedure`, and if every node processes those `messages` in the same `order`, then the `partitions` and `replicas` of the database are kept consistent with each other.
+  - the `ORDER` is `FIXED` at the time `the messages are delivered` -> this fact makes `total order broadcast` STRONGER than `timestamp ordering`
+  - another way of looking at `total order broadcast` is that it is a way of creating a `LOG`! (as in a `replication log`, `transaction log`, or `write-ahead log`)
+    - `delivering a message` is like `APPENDING to the LOG`
+    - all nodes must `deliver` the same `message` in the same `order`
+  - `total order broadcast` is also useful for implementing a `lock` service that provides `fencing tokens`
+    - `every request` to acquire the `lock` is `appended` as a message to the log.
+    - all messages are sequentially numbered in the `order` they appear in the log.
+    - the `sequence number` can then serve as a `fencing token`, because it is `monotonically increasing` (In `ZooKeeper`, this `sequence number` is called `zxid`)
 - implementing `linearizable storage` using `total order broadcast`
-- implementing `total order broadcast` using `linearizable storage`
+  - `total order broadcast` is `asynchronous`
+    - messages are guarantedd to be delivered reliably in a `fixed order`
+    - but there is `no` guarantee about `WHEN` a message will be delivered (so one recipient may `lag` behind the others)
+    - By contrast, `linearizability` is a `recency` guarantee
+  - If you have `total order broadcast`, you can build `linearizable storage` on top of it!
+    - you can implement such a `linearizable compare-and-set operation` by using `total order broadcast` as an `APPEND-ONLY log`
+    - choosing the `first` of the conflicting writes as the `winner` and `aborting later ones` ensures that `all nodes agree` on whether a write was committed or aborted
+    - similar approach can be used to implement `serializable` multi-object transactions on top of a `LOG`
+  - while this procedure ensures `linearizable writes`, it doesn't guarantee `linearizable reads` (=`sequential consistency`=`timeline consistency` : a slightly weaker guarantee than `linearizability)
+    - if you read from a store that is `asynchronously` updated from the `log`, it may be stale.
+  - to make `reads linearizable`..
+    - `Quorum reads` in `etcd`
+      - you can sequence `reads` through the `log` by `APPENDING` a message, reading the `log`, and performing the actual read when the message is delivered `back to you`.
+      - the `message's position in the log` thus defines the `point in time` at which the read happens
+    - `ZooKeeper's sync()`
+      - if the `log` allows you to fetch the `position` of the `latest log message` in a `linearizable` way
+      - you can query that `position`, `wait` for all entries up to that `position` to be delivered to you, and then perform the read
+    - chain replication (~ `Microsoft Azure Storage`)
+      - make your read from `ISR(a replica that is synchronously updated on writes)`, and is thus sure to be up to date.
+- implementing `total order broadcast` using `linearizable storage` (TURN IT AROUND!)
+  - for every message you want to send through `total order broadcast`, you perform `atomic` `increment-and-get` or `compare-and-set` the `linearizable` integer
+  - then attach the value you got from the register as a `sequence number` to the message
+  - you can then send the message to all nodes, and the recipients will deliver the messages consecutively by `sequence number`
+  - Key difference between `total order broadcast` and `timestamp ordering`
+    - unlike `Lamport timestamps`, the numbers you get from incrementing the `linearizable register` form a sequence with `no gaps`
+    - ref) the `ORDER` is `FIXED` at the time `the messages are delivered` -> this fact makes `total order broadcast` STRONGER than `timestamp ordering`
+- `LINEARIZABLE SEQUENCE NUMBER GENERATORS`: you inevitably end up with a `consensus` algorithm
+  - `consensus` is equivalent to...
+    - `linearizable compare-and-set` / `increment-and-get` register
+    - `total order broadcast`
+
+### Distributed Transactions and Consensus
+- `consensus`: get several nodes to agree on something
+- use cases
+  - leader election
+  - atomic commit
+
+#### Atomic Commit and Two-Phase Commit (2PC)
+- From single-node to distributed atomic commit
+  - transaction commit must be `irrevocable`
+    - once data has been committed, it becomes visible to other transactions
+    - this principle forms the basis of `read committed` isolation
+- Introduction to 2-phase commit
+  - commit/abort process in 2PC is split into two phases(prepare phase / commit phase)
+  - 2PC use a `coordinator`(= `transaction manager`)
+- A system of promises
+  - globally unique `transaction ID` from the `coordinator`
+  - `commit point`
+    - when the `coodinator` has received responses to `all` prepare requests, it makes a definitive `decision` on whether to commit or abort the transaction.
+    - `coordinator` must write that decision to its `transaction log on disk`
+  - two crucial `points of no return`
+    - when a participant votes "yes", it promises that it will definitely be able to commit later
+    - once the coodinator decides, that decision is irrevocable
+- Coordinator failure
+
+#### Distributed transcations in practice
